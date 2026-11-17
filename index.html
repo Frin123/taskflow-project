@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TaskFlow — Manajemen Proyek & Tugas Harian</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- ==================== VIEW: AUTH (LOGIN / REGISTER) ==================== -->
+  <section id="auth-view" class="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="brand-logo">TF</div>
+        <h1>TaskFlow</h1>
+        <p id="auth-subtitle">Masuk untuk mengelola proyek dan tugas Anda</p>
+      </div>
+
+      <div class="auth-tabs">
+        <button type="button" id="tab-login" class="auth-tab active">Masuk</button>
+        <button type="button" id="tab-register" class="auth-tab">Daftar Akun</button>
+      </div>
+
+      <!-- Form Login -->
+      <form id="login-form" class="auth-form" novalidate>
+        <div class="form-group">
+          <label for="login-email">Email</label>
+          <input type="email" id="login-email" placeholder="nama@email.com" required />
+          <small class="error-msg" id="err-login-email"></small>
+        </div>
+        <div class="form-group">
+          <label for="login-password">Kata Sandi</label>
+          <input type="password" id="login-password" placeholder="Masukkan kata sandi" required />
+          <small class="error-msg" id="err-login-password"></small>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Masuk ke Dashboard</button>
+      </form>
+
+      <!-- Form Register -->
+      <form id="register-form" class="auth-form hidden" novalidate>
+        <div class="form-group">
+          <label for="reg-name">Nama Lengkap</label>
+          <input type="text" id="reg-name" placeholder="Contoh: Budi Santoso" required />
+          <small class="error-msg" id="err-reg-name"></small>
+        </div>
+        <div class="form-group">
+          <label for="reg-email">Email</label>
+          <input type="email" id="reg-email" placeholder="nama@email.com" required />
+          <small class="error-msg" id="err-reg-email"></small>
+        </div>
+        <div class="form-group">
+          <label for="reg-password">Kata Sandi (Min. 6 karakter)</label>
+          <input type="password" id="reg-password" placeholder="Minimal 6 karakter" required />
+          <small class="error-msg" id="err-reg-password"></small>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Buat Akun</button>
+      </form>
+
+      <div class="auth-footer">
+        <button type="button" id="theme-toggle-auth" class="btn-icon" title="Ganti Tema">
+          <span class="theme-icon">🌙</span> Mode Gelap
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== VIEW: MAIN APP (PROTECTED) ==================== -->
+  <div id="app-view" class="app-layout hidden">
+    <!-- Top Navbar -->
+    <header class="navbar">
+      <div class="navbar-brand">
+        <div class="brand-logo small">TF</div>
+        <span class="brand-name">TaskFlow</span>
+      </div>
+
+      <nav class="navbar-nav">
+        <button type="button" class="nav-link active" data-page="dashboard">Dashboard</button>
+        <button type="button" class="nav-link" data-page="projects">Proyek & Tugas</button>
+      </nav>
+
+      <div class="navbar-actions">
+        <button type="button" id="btn-export" class="btn btn-outline btn-sm" title="Backup Data JSON">
+          ⬇ Export
+        </button>
+        <button type="button" id="theme-toggle-app" class="btn-icon" title="Ganti Tema">
+          <span class="theme-icon">🌙</span>
+        </button>
+        <div class="user-badge">
+          <span id="user-display-name">Pengguna</span>
+        </div>
+        <button type="button" id="btn-logout" class="btn btn-danger btn-sm">Logout</button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-container">
+      <!-- PAGE 1: DASHBOARD -->
+      <section id="page-dashboard" class="page-section">
+        <div class="page-header">
+          <div>
+            <h2>Ringkasan Aktivitas</h2>
+            <p class="text-muted">Pantau progres proyek dan tenggat waktu terdekat Anda.</p>
+          </div>
+          <button type="button" id="btn-quick-project" class="btn btn-primary">+ Proyek Baru</button>
+        </div>
+
+        <!-- Stat Cards -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-label">Total Proyek</span>
+            <strong class="stat-value" id="stat-total-projects">0</strong>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">To-Do</span>
+            <strong class="stat-value text-todo" id="stat-todo">0</strong>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">In-Progress</span>
+            <strong class="stat-value text-progress" id="stat-inprogress">0</strong>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Done</span>
+            <strong class="stat-value text-done" id="stat-done">0</strong>
+          </div>
+        </div>
+
+        <!-- Urgent Deadlines -->
+        <div class="card-panel">
+          <div class="panel-header">
+            <h3>⏰ Tugas Mendekati Deadline (≤ 3 Hari / Terlewat)</h3>
+          </div>
+          <div id="urgent-tasks-list" class="urgent-list"></div>
+        </div>
+      </section>
+
+      <!-- PAGE 2: PROJECTS & KANBAN TASKS -->
+      <section id="page-projects" class="page-section hidden">
+        <div class="page-header">
+          <div>
+            <h2>Daftar Proyek</h2>
+            <p class="text-muted">Pilih proyek untuk mengelola papan tugas dan lampiran.</p>
+          </div>
+          <button type="button" id="btn-add-project" class="btn btn-primary">+ Tambah Proyek</button>
+        </div>
+
+        <!-- Projects Grid -->
+        <div id="projects-grid" class="projects-grid"></div>
+
+        <!-- Selected Project Workspace (Tasks) -->
+        <div id="task-workspace" class="workspace-panel hidden">
+          <div class="workspace-header">
+            <div>
+              <span class="badge-label">Proyek Aktif</span>
+              <h3 id="active-project-title">Nama Proyek</h3>
+              <p id="active-project-desc" class="text-muted"></p>
+            </div>
+            <div class="workspace-actions">
+              <button type="button" id="btn-add-task" class="btn btn-primary">+ Tambah Tugas</button>
+              <button type="button" id="btn-close-workspace" class="btn btn-outline">Tutup Papan</button>
+            </div>
+          </div>
+
+          <!-- Filter & Search Bar -->
+          <div class="filter-bar">
+            <input type="text" id="task-search" placeholder="🔍 Cari judul atau deskripsi tugas..." />
+            <select id="task-filter-status">
+              <option value="ALL">Semua Status</option>
+              <option value="To-do">To-do</option>
+              <option value="In-Progress">In-Progress</option>
+              <option value="Done">Done</option>
+            </select>
+            <select id="task-filter-deadline">
+              <option value="ALL">Semua Deadline</option>
+              <option value="UPCOMING">Mendekati (≤ 3 Hari)</option>
+              <option value="OVERDUE">Terlewat (Overdue)</option>
+            </select>
+          </div>
+
+          <!-- Kanban Board (HTML5 Drag & Drop) -->
+          <div class="kanban-board">
+            <div class="kanban-column" data-status="To-do">
+              <div class="kanban-col-header">
+                <h4>To-do</h4>
+                <span class="col-count" id="count-todo">0</span>
+              </div>
+              <div class="kanban-dropzone" id="col-To-do" data-status="To-do"></div>
+            </div>
+
+            <div class="kanban-column" data-status="In-Progress">
+              <div class="kanban-col-header">
+                <h4>In-Progress</h4>
+                <span class="col-count" id="count-inprogress">0</span>
+              </div>
+              <div class="kanban-dropzone" id="col-In-Progress" data-status="In-Progress"></div>
+            </div>
+
+            <div class="kanban-column" data-status="Done">
+              <div class="kanban-col-header">
+                <h4>Done</h4>
+                <span class="col-count" id="count-done">0</span>
+              </div>
+              <div class="kanban-dropzone" id="col-Done" data-status="Done"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ==================== MODAL: PROJECT FORM ==================== -->
+  <div id="modal-project" class="modal-backdrop hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modal-project-title">Tambah Proyek Baru</h3>
+        <button type="button" class="btn-close" data-close="modal-project">&times;</button>
+      </div>
+      <form id="project-form" novalidate>
+        <input type="hidden" id="project-id" />
+        <div class="form-group">
+          <label for="project-name">Nama Proyek *</label>
+          <input type="text" id="project-name" placeholder="Contoh: Website Portofolio" required />
+          <small class="error-msg" id="err-project-name"></small>
+        </div>
+        <div class="form-group">
+          <label for="project-desc">Deskripsi *</label>
+          <textarea id="project-desc" rows="3" placeholder="Jelaskan tujuan proyek..." required></textarea>
+          <small class="error-msg" id="err-project-desc"></small>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="project-deadline">Tanggal Deadline *</label>
+            <input type="date" id="project-deadline" required />
+            <small class="error-msg" id="err-project-deadline"></small>
+          </div>
+          <div class="form-group">
+            <label for="project-status">Status Proyek</label>
+            <select id="project-status">
+              <option value="Aktif">Aktif</option>
+              <option value="Tertunda">Tertunda</option>
+              <option value="Selesai">Selesai</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" data-close="modal-project">Batal</button>
+          <button type="submit" class="btn btn-primary">Simpan Proyek</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: TASK FORM ==================== -->
+  <div id="modal-task" class="modal-backdrop hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modal-task-title">Tambah Tugas Baru</h3>
+        <button type="button" class="btn-close" data-close="modal-task">&times;</button>
+      </div>
+      <form id="task-form" novalidate>
+        <input type="hidden" id="task-id" />
+        <div class="form-group">
+          <label for="task-title">Judul Tugas *</label>
+          <input type="text" id="task-title" placeholder="Contoh: Desain Wireframe Homepage" required />
+          <small class="error-msg" id="err-task-title"></small>
+        </div>
+        <div class="form-group">
+          <label for="task-desc">Deskripsi Tugas *</label>
+          <textarea id="task-desc" rows="3" placeholder="Detail pekerjaan yang harus dilakukan..." required></textarea>
+          <small class="error-msg" id="err-task-desc"></small>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="task-deadline">Deadline Tugas *</label>
+            <input type="date" id="task-deadline" required />
+            <small class="error-msg" id="err-task-deadline"></small>
+          </div>
+          <div class="form-group">
+            <label for="task-status">Status</label>
+            <select id="task-status">
+              <option value="To-do">To-do</option>
+              <option value="In-Progress">In-Progress</option>
+              <option value="Done">Done</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="task-attachment">Lampiran File (Opsional - Gambar/PDF/Dokumen, Maks. 5MB)</label>
+          <input type="file" id="task-attachment" />
+          <div id="existing-attachment-info" class="attachment-preview hidden"></div>
+          <small class="error-msg" id="err-task-attachment"></small>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" data-close="modal-task">Batal</button>
+          <button type="submit" class="btn btn-primary">Simpan Tugas</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: CONFIRMATION ==================== -->
+  <div id="modal-confirm" class="modal-backdrop hidden">
+    <div class="modal-box modal-sm">
+      <div class="modal-header">
+        <h3 id="confirm-title">Konfirmasi Hapus</h3>
+        <button type="button" class="btn-close" data-close="modal-confirm">&times;</button>
+      </div>
+      <p id="confirm-message" class="confirm-text">Apakah Anda yakin ingin menghapus item ini?</p>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" data-close="modal-confirm">Batal</button>
+        <button type="button" id="btn-confirm-yes" class="btn btn-danger">Ya, Hapus</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
